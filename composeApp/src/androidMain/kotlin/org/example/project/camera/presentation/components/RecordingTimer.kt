@@ -25,10 +25,8 @@ import androidx.compose.ui.unit.sp
 import org.example.project.camera.presentation.theme.SurveillanceColors
 
 /**
- * Surveillance-style recording timer.
- *
- * When recording: shows "● REC  00:42" in red monospace with a pulsing dot.
- * When idle: hidden (empty).
+ * Clean recording indicator: red dot + formatted time.
+ * Hidden when not recording.
  */
 @Composable
 fun RecordingTimer(
@@ -41,9 +39,9 @@ fun RecordingTimer(
     val infiniteTransition = rememberInfiniteTransition(label = "rec_pulse")
     val dotAlpha by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = 0.2f,
+        targetValue = 0.3f,
         animationSpec = infiniteRepeatable(
-            animation = tween(600),
+            animation = tween(700),
             repeatMode = RepeatMode.Reverse,
         ),
         label = "dot_alpha",
@@ -52,13 +50,12 @@ fun RecordingTimer(
     Row(
         modifier = modifier
             .background(
-                color = SurveillanceColors.RecRed.copy(alpha = 0.15f),
-                shape = RoundedCornerShape(4.dp),
+                color = SurveillanceColors.Background.copy(alpha = 0.7f),
+                shape = RoundedCornerShape(20.dp),
             )
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Pulsing red dot
         Canvas(modifier = Modifier.size(8.dp)) {
             drawCircle(
                 color = SurveillanceColors.RecRed.copy(alpha = dotAlpha),
@@ -68,23 +65,11 @@ fun RecordingTimer(
         Spacer(modifier = Modifier.width(8.dp))
 
         Text(
-            text = "REC",
-            color = SurveillanceColors.RecRed,
-            fontSize = 12.sp,
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 2.sp,
-        )
-
-        Spacer(modifier = Modifier.width(10.dp))
-
-        Text(
             text = formattedTime,
             color = SurveillanceColors.TextPrimary,
             fontSize = 14.sp,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Medium,
-            letterSpacing = 1.sp,
         )
     }
 }

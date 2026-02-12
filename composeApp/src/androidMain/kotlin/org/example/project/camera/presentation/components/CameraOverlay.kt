@@ -1,14 +1,17 @@
 package org.example.project.camera.presentation.components
 
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,9 +21,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,14 +32,10 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * CCTV-style heads-up display overlay drawn on top of the camera preview.
+ * Clean status bar overlay for the camera feed.
  *
- * Includes:
- * - Corner brackets (viewfinder)
- * - "CAM-01 | REAR/FRONT" label
- * - Live timestamp
- * - "LIVE" badge with pulsing dot
- * - Subtle horizontal grid/scan lines
+ * Shows camera label, timestamp, and recording status in a
+ * minimal, professional layout.
  */
 @Composable
 fun CameraOverlay(
@@ -48,7 +44,6 @@ fun CameraOverlay(
 ) {
     var currentTime by remember { mutableStateOf(getCurrentTimestamp()) }
 
-    // Tick the clock every second
     LaunchedEffect(Unit) {
         while (true) {
             currentTime = getCurrentTimestamp()
@@ -57,97 +52,58 @@ fun CameraOverlay(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        // Corner brackets + grid lines (Canvas layer)
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val w = size.width
-            val h = size.height
-            val bracketLen = 40f
-            val bracketStroke = 2.5f
-            val margin = 32f
-            val color = SurveillanceColors.CornerBracket.copy(alpha = 0.8f)
-
-            // ─── Corner Brackets ─────────────────────────────
-            // Top-left
-            drawLine(color, Offset(margin, margin), Offset(margin + bracketLen, margin), bracketStroke, StrokeCap.Square)
-            drawLine(color, Offset(margin, margin), Offset(margin, margin + bracketLen), bracketStroke, StrokeCap.Square)
-            // Top-right
-            drawLine(color, Offset(w - margin, margin), Offset(w - margin - bracketLen, margin), bracketStroke, StrokeCap.Square)
-            drawLine(color, Offset(w - margin, margin), Offset(w - margin, margin + bracketLen), bracketStroke, StrokeCap.Square)
-            // Bottom-left
-            drawLine(color, Offset(margin, h - margin), Offset(margin + bracketLen, h - margin), bracketStroke, StrokeCap.Square)
-            drawLine(color, Offset(margin, h - margin), Offset(margin, h - margin - bracketLen), bracketStroke, StrokeCap.Square)
-            // Bottom-right
-            drawLine(color, Offset(w - margin, h - margin), Offset(w - margin - bracketLen, h - margin), bracketStroke, StrokeCap.Square)
-            drawLine(color, Offset(w - margin, h - margin), Offset(w - margin, h - margin - bracketLen), bracketStroke, StrokeCap.Square)
-
-            // ─── Center crosshair ────────────────────────────
-            val cx = w / 2
-            val cy = h / 2
-            val crossSize = 16f
-            val crossColor = SurveillanceColors.NeonGreen.copy(alpha = 0.3f)
-            drawLine(crossColor, Offset(cx - crossSize, cy), Offset(cx + crossSize, cy), 1f)
-            drawLine(crossColor, Offset(cx, cy - crossSize), Offset(cx, cy + crossSize), 1f)
-
-            // ─── Subtle scan lines ───────────────────────────
-            val lineStep = h / 120
-            for (i in 0..120) {
-                drawLine(
-                    color = SurveillanceColors.GridLine,
-                    start = Offset(0f, i * lineStep),
-                    end = Offset(w, i * lineStep),
-                    strokeWidth = 0.5f,
-                )
-            }
-        }
-
-        // ─── Top-left: Camera label ──────────────────────────
-        Column(
+        // Top bar — camera info
+        Row(
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(start = 20.dp, top = 56.dp),
+                .fillMaxWidth()
+                .background(SurveillanceColors.Background.copy(alpha = 0.4f))
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = "CAM-01 // ${if (isFrontCamera) "FRONT" else "REAR"}",
-                color = SurveillanceColors.NeonGreen,
-                fontSize = 11.sp,
-                fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 2.sp,
-            )
+            // Camera label
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .background(
+                            color = SurveillanceColors.Accent,
+                            shape = RoundedCornerShape(3.dp),
+                        )
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                ) {
+                    Text(
+                        text = if (isFrontCamera) "FRONT" else "REAR",
+                        color = SurveillanceColors.White,
+                        fontSize = 9.sp,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp,
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(10.dp))
+
+                Text(
+                    text = "Camera 01",
+                    color = SurveillanceColors.TextPrimary.copy(alpha = 0.9f),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+
+            // Timestamp
             Text(
                 text = currentTime,
                 color = SurveillanceColors.TextSecondary,
-                fontSize = 10.sp,
-                fontFamily = FontFamily.Monospace,
-                letterSpacing = 1.sp,
-            )
-        }
-
-        // ─── Top-right: LIVE badge ───────────────────────────
-        Row(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(end = 20.dp, top = 56.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // Solid green dot
-            Canvas(modifier = Modifier.size(6.dp)) {
-                drawCircle(color = SurveillanceColors.NeonGreen)
-            }
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = "LIVE",
-                color = SurveillanceColors.NeonGreen,
                 fontSize = 11.sp,
                 fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 2.sp,
             )
         }
     }
 }
 
 private fun getCurrentTimestamp(): String {
-    val sdf = SimpleDateFormat("yyyy-MM-dd  HH:mm:ss", Locale.getDefault())
+    val sdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
     return sdf.format(Date())
 }

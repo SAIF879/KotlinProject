@@ -3,9 +3,9 @@ package org.example.project.camera.presentation.components
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -20,12 +21,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -33,10 +31,7 @@ import androidx.compose.ui.unit.sp
 import org.example.project.camera.presentation.theme.SurveillanceColors
 
 /**
- * Surveillance-themed permission request screen.
- *
- * Shows a shield icon with "ACCESS DENIED" heading
- * and a tactical "AUTHORIZE" button.
+ * Professional permission request screen.
  */
 @Composable
 fun PermissionScreen(
@@ -53,55 +48,58 @@ fun PermissionScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        // Shield / lock icon
-        ShieldIcon()
+        // Icon
+        Box(
+            modifier = Modifier
+                .size(72.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            SurveillanceColors.Accent,
+                            SurveillanceColors.AccentDim,
+                        ),
+                    )
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "🎥",
+                fontSize = 28.sp,
+            )
+        }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
         Text(
-            text = "ACCESS DENIED",
-            color = SurveillanceColors.RecRed,
+            text = "Camera Access Required",
+            color = SurveillanceColors.TextPrimary,
             fontSize = 22.sp,
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 4.sp,
+            fontWeight = FontWeight.SemiBold,
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "CAMERA & AUDIO AUTHORIZATION\nREQUIRED TO PROCEED",
+            text = "To use the security monitor, please grant\ncamera and microphone permissions.",
             color = SurveillanceColors.TextSecondary,
-            fontSize = 12.sp,
-            fontFamily = FontFamily.Monospace,
-            letterSpacing = 1.sp,
+            fontSize = 14.sp,
             textAlign = TextAlign.Center,
-            lineHeight = 20.sp,
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "SEC CLEARANCE: LEVEL 1",
-            color = SurveillanceColors.NeonGreen.copy(alpha = 0.5f),
-            fontSize = 10.sp,
-            fontFamily = FontFamily.Monospace,
-            letterSpacing = 2.sp,
+            lineHeight = 22.sp,
         )
 
         Spacer(modifier = Modifier.height(40.dp))
 
         if (isPermanentlyDenied) {
             Text(
-                text = "[ PERMISSION PERMANENTLY DENIED ]",
-                color = SurveillanceColors.RecRed.copy(alpha = 0.7f),
-                fontSize = 10.sp,
-                fontFamily = FontFamily.Monospace,
-                letterSpacing = 1.sp,
+                text = "Permission was denied. Please enable it\nin your device settings.",
+                color = SurveillanceColors.TextTertiary,
+                fontSize = 13.sp,
                 textAlign = TextAlign.Center,
+                lineHeight = 20.sp,
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Button(
                 onClick = {
@@ -112,19 +110,17 @@ fun PermissionScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(4.dp),
+                    .height(50.dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = SurveillanceColors.SurfaceVariant,
-                    contentColor = SurveillanceColors.Cyan,
+                    contentColor = SurveillanceColors.TextPrimary,
                 ),
             ) {
                 Text(
-                    text = "[ OPEN SETTINGS ]",
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 2.sp,
-                    fontSize = 12.sp,
+                    text = "Open Settings",
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 15.sp,
                 )
             }
         } else {
@@ -132,71 +128,19 @@ fun PermissionScreen(
                 onClick = onRequestPermission,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
-                shape = RoundedCornerShape(4.dp),
+                    .height(50.dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = SurveillanceColors.NeonGreen,
-                    contentColor = SurveillanceColors.Background,
+                    containerColor = SurveillanceColors.Accent,
+                    contentColor = SurveillanceColors.White,
                 ),
             ) {
                 Text(
-                    text = "[ AUTHORIZE ]",
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 3.sp,
-                    fontSize = 13.sp,
+                    text = "Grant Permission",
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 15.sp,
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun ShieldIcon() {
-    Canvas(modifier = Modifier.size(72.dp)) {
-        val center = Offset(size.width / 2, size.height / 2)
-        val w = size.width
-        val h = size.height
-
-        // Shield outline (simplified as a pointed-bottom shape)
-        val shieldColor = SurveillanceColors.RecRed.copy(alpha = 0.8f)
-
-        // Outer circle
-        drawCircle(
-            color = shieldColor,
-            radius = w / 2.5f,
-            center = center,
-            style = Stroke(width = 2.5f),
-        )
-
-        // Lock body (rectangle)
-        val lockW = w * 0.22f
-        val lockH = h * 0.18f
-        val lockTop = center.y + h * 0.02f
-        drawRect(
-            color = shieldColor,
-            topLeft = Offset(center.x - lockW, lockTop),
-            size = androidx.compose.ui.geometry.Size(lockW * 2, lockH),
-            style = Stroke(width = 2f),
-        )
-
-        // Lock shackle (arc)
-        val shackleRadius = lockW * 0.7f
-        drawArc(
-            color = shieldColor,
-            startAngle = 180f,
-            sweepAngle = 180f,
-            useCenter = false,
-            topLeft = Offset(center.x - shackleRadius, lockTop - shackleRadius * 1.5f),
-            size = androidx.compose.ui.geometry.Size(shackleRadius * 2, shackleRadius * 2),
-            style = Stroke(width = 2f, cap = StrokeCap.Square),
-        )
-
-        // Keyhole dot
-        drawCircle(
-            color = shieldColor,
-            radius = 2.5f,
-            center = Offset(center.x, lockTop + lockH * 0.45f),
-        )
     }
 }

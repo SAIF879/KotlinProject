@@ -1,6 +1,5 @@
 package org.example.project.camera.presentation.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -11,32 +10,42 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// ── Surveillance Color Palette ──────────────────────────────────────────────
+// ── Professional Color Palette ──────────────────────────────────────────────
 
 object SurveillanceColors {
-    val Background = Color(0xFF0A0E17)
-    val Surface = Color(0xFF111827)
-    val SurfaceVariant = Color(0xFF1A2035)
-    val NeonGreen = Color(0xFF00FF41)
-    val NeonGreenDim = Color(0xFF00CC33)
-    val Cyan = Color(0xFF00E5FF)
-    val RecRed = Color(0xFFFF1744)
-    val RecRedDim = Color(0xFFD50000)
-    val TextPrimary = Color(0xFFE0E0E0)
-    val TextSecondary = Color(0xFF8892A4)
-    val OverlayDark = Color(0xCC0A0E17)   // 80% opacity
-    val OverlayLight = Color(0x330A0E17)  // 20% opacity
-    val GridLine = Color(0x1A00FF41)       // 10% green
-    val CornerBracket = Color(0xFF00FF41)
+    // Core
+    val Background = Color(0xFF111111)
+    val Surface = Color(0xFF1A1A1A)
+    val SurfaceVariant = Color(0xFF242424)
+    val SurfaceElevated = Color(0xFF2A2A2A)
+
+    // Accent
+    val Accent = Color(0xFF3B82F6)        // Refined blue
+    val AccentLight = Color(0xFF60A5FA)
+    val AccentDim = Color(0xFF2563EB)
+
+    // Status
+    val RecRed = Color(0xFFEF4444)
+    val RecRedDim = Color(0xFFDC2626)
+    val StatusGreen = Color(0xFF22C55E)
+
+    // Text
+    val TextPrimary = Color(0xFFF5F5F5)
+    val TextSecondary = Color(0xFF9CA3AF)
+    val TextTertiary = Color(0xFF6B7280)
+
+    // Overlay
+    val OverlayDark = Color(0xCC111111)
     val White = Color(0xFFFFFFFF)
+    val Divider = Color(0xFF2E2E2E)
 }
 
 // ── Color Scheme ────────────────────────────────────────────────────────────
 
-private val SurveillanceColorScheme = darkColorScheme(
-    primary = SurveillanceColors.NeonGreen,
-    onPrimary = SurveillanceColors.Background,
-    secondary = SurveillanceColors.Cyan,
+private val AppColorScheme = darkColorScheme(
+    primary = SurveillanceColors.Accent,
+    onPrimary = SurveillanceColors.White,
+    secondary = SurveillanceColors.AccentLight,
     onSecondary = SurveillanceColors.Background,
     background = SurveillanceColors.Background,
     onBackground = SurveillanceColors.TextPrimary,
@@ -48,74 +57,66 @@ private val SurveillanceColorScheme = darkColorScheme(
     onError = SurveillanceColors.White,
 )
 
-// ── Typography (Monospace) ──────────────────────────────────────────────────
+// ── Typography ──────────────────────────────────────────────────────────────
 
-private val SurveillanceTypography = Typography(
+private val AppTypography = Typography(
     displayLarge = TextStyle(
-        fontFamily = FontFamily.Monospace,
-        fontWeight = FontWeight.Bold,
-        fontSize = 32.sp,
-        letterSpacing = 4.sp,
+        fontWeight = FontWeight.Light,
+        fontSize = 34.sp,
+        letterSpacing = (-0.5).sp,
     ),
     displayMedium = TextStyle(
-        fontFamily = FontFamily.Monospace,
-        fontWeight = FontWeight.Bold,
-        fontSize = 24.sp,
-        letterSpacing = 3.sp,
+        fontWeight = FontWeight.Light,
+        fontSize = 28.sp,
+        letterSpacing = 0.sp,
     ),
     headlineLarge = TextStyle(
-        fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 20.sp,
-        letterSpacing = 2.sp,
+        fontSize = 22.sp,
+        letterSpacing = 0.sp,
     ),
     headlineMedium = TextStyle(
-        fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.Medium,
         fontSize = 18.sp,
-        letterSpacing = 1.5.sp,
+        letterSpacing = 0.15.sp,
     ),
     titleLarge = TextStyle(
-        fontFamily = FontFamily.Monospace,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Medium,
         fontSize = 16.sp,
-        letterSpacing = 1.sp,
+        letterSpacing = 0.15.sp,
     ),
     titleMedium = TextStyle(
-        fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.Medium,
         fontSize = 14.sp,
-        letterSpacing = 1.sp,
+        letterSpacing = 0.1.sp,
     ),
     bodyLarge = TextStyle(
-        fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
+        fontSize = 16.sp,
         letterSpacing = 0.5.sp,
     ),
     bodyMedium = TextStyle(
-        fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.Normal,
-        fontSize = 12.sp,
-        letterSpacing = 0.5.sp,
+        fontSize = 14.sp,
+        letterSpacing = 0.25.sp,
     ),
     labelLarge = TextStyle(
         fontFamily = FontFamily.Monospace,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Medium,
         fontSize = 12.sp,
-        letterSpacing = 1.5.sp,
+        letterSpacing = 0.5.sp,
     ),
     labelMedium = TextStyle(
         fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.Medium,
-        fontSize = 10.sp,
-        letterSpacing = 1.sp,
+        fontSize = 11.sp,
+        letterSpacing = 0.5.sp,
     ),
     labelSmall = TextStyle(
         fontFamily = FontFamily.Monospace,
         fontWeight = FontWeight.Normal,
-        fontSize = 9.sp,
-        letterSpacing = 1.sp,
+        fontSize = 10.sp,
+        letterSpacing = 0.5.sp,
     ),
 )
 
@@ -126,8 +127,8 @@ fun SurveillanceTheme(
     content: @Composable () -> Unit,
 ) {
     MaterialTheme(
-        colorScheme = SurveillanceColorScheme,
-        typography = SurveillanceTypography,
+        colorScheme = AppColorScheme,
+        typography = AppTypography,
         content = content,
     )
 }

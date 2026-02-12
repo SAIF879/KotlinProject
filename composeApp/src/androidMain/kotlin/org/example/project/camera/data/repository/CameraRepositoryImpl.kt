@@ -158,28 +158,39 @@ class CameraRepositoryImpl(
         val tempFile = File.createTempFile("recording_", ".mp4", context.cacheDir)
         val outputOptions = FileOutputOptions.Builder(tempFile).build()
 
+        val hasAudioPermission = PermissionChecker.checkSelfPermission(
+            context, Manifest.permission.RECORD_AUDIO
+        ) == PermissionChecker.PERMISSION_GRANTED
+
         try {
-            val pendingRecording = capture.output
-                .prepareRecording(context, outputOptions)
-
-            // Add audio if permission is granted
-            if (PermissionChecker.checkSelfPermission(
-                    context, Manifest.permission.RECORD_AUDIO
-                ) == PermissionChecker.PERMISSION_GRANTED
-            ) {
-                pendingRecording.withAudioEnabled()
-            }
-
-            activeRecording = pendingRecording.start(
-                ContextCompat.getMainExecutor(context)
-            ) { event ->
-                handleRecordingEvent(event, tempFile)
-            }
-
+            activeRecording = startRecordingInternal(capture, outputOptions, tempFile, withAudio = hasAudioPermission)
             _recordingState.value = RecordingState.Recording()
             Log.d(TAG, "Recording started → ${tempFile.absolutePath}")
             return Result.success(Unit)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            // CameraX throws AssertionError when audio encoder is in ERROR state.
+            // Rebuild the Recorder to reset encoder state, then retry without audio.
+            if (hasAudioPermission && (e is AssertionError || e.message?.contains("ERROR_ENCODER") == true)) {
+                Log.w(TAG, "Audio encoder failed, rebuilding recorder and retrying without audio", e)
+                try {
+                    rebuildRecorder()
+                    val retryCapture = videoCapture
+                        ?: return Result.failure(IllegalStateException("VideoCapture is null after rebuild"))
+                    val retryFile = File.createTempFile("recording_", ".mp4", context.cacheDir)
+                    val retryOptions = FileOutputOptions.Builder(retryFile).build()
+                    activeRecording = startRecordingInternal(retryCapture, retryOptions, retryFile, withAudio = false)
+                    _recordingState.value = RecordingState.Recording()
+                    Log.d(TAG, "Recording started (no audio) → ${retryFile.absolutePath}")
+                    return Result.success(Unit)
+                } catch (retryError: Throwable) {
+                    Log.e(TAG, "Retry without audio also failed", retryError)
+                    _recordingState.value = RecordingState.Error(
+                        CameraError.RecordingFailed(retryError.localizedMessage ?: "Recording failed")
+                    )
+                    return Result.failure(retryError)
+                }
+            }
+
             Log.e(TAG, "Failed to start recording", e)
             _recordingState.value = RecordingState.Error(
                 CameraError.RecordingFailed(e.localizedMessage ?: "Failed to start recording")
@@ -188,18 +199,71 @@ class CameraRepositoryImpl(
         }
     }
 
+    /**
+     * Starts the actual recording on the given [VideoCapture] output.
+     */
+    private fun startRecordingInternal(
+        capture: VideoCapture<Recorder>,
+        outputOptions: FileOutputOptions,
+        tempFile: File,
+        withAudio: Boolean,
+    ): Recording {
+        val pendingRecording = capture.output.prepareRecording(context, outputOptions)
+
+        if (withAudio) {
+            pendingRecording.withAudioEnabled()
+        }
+
+        return pendingRecording.start(
+            ContextCompat.getMainExecutor(context)
+        ) { event ->
+            handleRecordingEvent(event, tempFile)
+        }
+    }
+
+    /**
+     * Rebuilds the Recorder and VideoCapture to reset encoder state.
+     * Rebinds to the current lifecycle if available.
+     */
+    private fun rebuildRecorder() {
+        val owner = boundLifecycleOwner ?: return
+        val provider = cameraProvider ?: return
+
+        val recorder = Recorder.Builder()
+            .setQualitySelector(QualitySelector.from(Quality.HD))
+            .build()
+        videoCapture = VideoCapture.withOutput(recorder)
+
+        provider.unbindAll()
+        provider.bindToLifecycle(
+            owner,
+            currentCameraSelector,
+            preview,
+            videoCapture,
+        )
+        Log.d(TAG, "Recorder rebuilt and rebound")
+    }
+
     override suspend fun stopRecording(): Result<Unit> {
         return try {
-            activeRecording?.stop()
-            activeRecording = null
-            // State will be set to Idle in the Finalize event callback
-            Log.d(TAG, "Recording stop requested")
+            val recording = activeRecording
+            if (recording != null) {
+                recording.stop()
+                activeRecording = null
+                Log.d(TAG, "Recording stop requested")
+            } else {
+                // No active recording — force reset state
+                Log.w(TAG, "stopRecording called but no active recording, resetting state")
+                _recordingState.value = RecordingState.Idle
+            }
             Result.success(Unit)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.e(TAG, "Failed to stop recording", e)
-            _recordingState.value = RecordingState.Error(
-                CameraError.RecordingFailed(e.localizedMessage ?: "Failed to stop recording")
-            )
+            // Force cleanup regardless of error
+            activeRecording = null
+            _recordingState.value = RecordingState.Idle
+            // Rebuild recorder to recover from bad state
+            try { rebuildRecorder() } catch (_: Throwable) {}
             Result.failure(e)
         }
     }

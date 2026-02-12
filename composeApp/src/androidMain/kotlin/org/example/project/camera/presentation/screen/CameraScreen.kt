@@ -36,7 +36,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,14 +59,6 @@ private val REQUIRED_PERMISSIONS = arrayOf(
     Manifest.permission.RECORD_AUDIO,
 )
 
-/**
- * Top-level camera recording screen with surveillance theme.
- *
- * This composable is the entry point for the camera feature. It:
- * 1. Gates the UI behind runtime permission checks
- * 2. Shows the camera preview with CCTV overlay and controls when granted
- * 3. Shows an "ACCESS DENIED" screen when permissions are denied
- */
 @Composable
 fun CameraScreen(
     viewModel: CameraViewModel = koinViewModel(),
@@ -75,7 +66,6 @@ fun CameraScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Permission state
     var permissionsGranted by rememberSaveable {
         mutableStateOf(
             REQUIRED_PERMISSIONS.all {
@@ -89,7 +79,6 @@ fun CameraScreen(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         permissionsGranted = permissions.values.all { it }
-
         if (!permissionsGranted) {
             val activity = context as? Activity
             isPermanentlyDenied = activity != null && REQUIRED_PERMISSIONS.any { perm ->
@@ -103,17 +92,12 @@ fun CameraScreen(
         CameraContent(viewModel = viewModel)
     } else {
         PermissionScreen(
-            onRequestPermission = {
-                permissionLauncher.launch(REQUIRED_PERMISSIONS)
-            },
+            onRequestPermission = { permissionLauncher.launch(REQUIRED_PERMISSIONS) },
             isPermanentlyDenied = isPermanentlyDenied,
         )
     }
 }
 
-/**
- * Main camera UI: preview + CCTV overlay + recording controls + flip button + error snackbar.
- */
 @Composable
 private fun CameraContent(
     viewModel: CameraViewModel,
@@ -121,7 +105,6 @@ private fun CameraContent(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val cameraRepository: CameraRepository = koinInject()
 
-    // Flip animation
     var flipCount by remember { mutableIntStateOf(0) }
     val flipRotation by animateFloatAsState(
         targetValue = flipCount * 180f,
@@ -135,37 +118,37 @@ private fun CameraContent(
             .background(SurveillanceColors.Background)
             .systemBarsPadding(),
     ) {
-        // Live camera preview
+        // Camera preview
         CameraPreview(
             cameraRepository = cameraRepository as CameraRepositoryImpl,
             onCameraReady = viewModel::onCameraReady,
             modifier = Modifier.fillMaxSize(),
         )
 
-        // CCTV overlay (corner brackets, grid, labels)
+        // Status overlay
         CameraOverlay(
             isFrontCamera = uiState.isFrontCamera,
             modifier = Modifier.fillMaxSize(),
         )
 
-        // Recording timer — top center
+        // Recording timer — top center (below overlay bar)
         RecordingTimer(
             isRecording = uiState.isRecording,
             formattedTime = uiState.formattedTime,
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 24.dp),
+                .padding(top = 52.dp),
         )
 
-        // Flip camera button — bottom right (hidden while recording)
+        // Flip camera — bottom end
         if (!uiState.isRecording) {
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(bottom = 60.dp, end = 32.dp)
-                    .size(48.dp)
+                    .padding(bottom = 56.dp, end = 40.dp)
+                    .size(44.dp)
                     .clip(CircleShape)
-                    .background(SurveillanceColors.SurfaceVariant.copy(alpha = 0.7f))
+                    .background(SurveillanceColors.Background.copy(alpha = 0.5f))
                     .rotate(flipRotation)
                     .clickable(
                         indication = null,
@@ -176,20 +159,20 @@ private fun CameraContent(
                     },
                 contentAlignment = Alignment.Center,
             ) {
-                FlipCameraIconCanvas()
+                FlipIcon()
             }
         }
 
-        // Record / Stop button — bottom center
+        // Record button — bottom center
         RecordingControls(
             isRecording = uiState.isRecording,
             onToggleRecording = viewModel::toggleRecording,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 32.dp),
+                .padding(bottom = 40.dp),
         )
 
-        // Error snackbar — bottom
+        // Error snackbar
         uiState.error?.let { error ->
             Snackbar(
                 modifier = Modifier
@@ -197,41 +180,27 @@ private fun CameraContent(
                     .padding(16.dp),
                 action = {
                     TextButton(onClick = viewModel::dismissError) {
-                        Text(
-                            text = "[ DISMISS ]",
-                            color = SurveillanceColors.NeonGreen,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp,
-                            letterSpacing = 1.sp,
-                        )
+                        Text("Dismiss", color = SurveillanceColors.White)
                     }
                 },
-                containerColor = SurveillanceColors.RecRed.copy(alpha = 0.9f),
+                containerColor = SurveillanceColors.RecRed,
             ) {
                 Text(
-                    text = "⚠ ${error.message.uppercase()}",
-                    color = Color.White,
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 11.sp,
-                    letterSpacing = 1.sp,
+                    text = error.message,
+                    color = SurveillanceColors.White,
+                    fontSize = 13.sp,
                 )
             }
         }
     }
 }
 
-/**
- * Canvas-drawn flip camera icon — two curved arrows.
- */
 @Composable
-private fun FlipCameraIconCanvas() {
-    Canvas(modifier = Modifier.size(22.dp)) {
-        val w = size.width
-        val h = size.height
-        val color = SurveillanceColors.NeonGreen
+private fun FlipIcon() {
+    Canvas(modifier = Modifier.size(20.dp)) {
+        val color = SurveillanceColors.White
 
-        // Top arrow arc
+        // Two arcs forming a refresh/flip symbol
         drawArc(
             color = color,
             startAngle = 200f,
@@ -239,8 +208,6 @@ private fun FlipCameraIconCanvas() {
             useCenter = false,
             style = Stroke(width = 2f, cap = StrokeCap.Round),
         )
-
-        // Bottom arrow arc
         drawArc(
             color = color,
             startAngle = 20f,
@@ -250,16 +217,11 @@ private fun FlipCameraIconCanvas() {
         )
 
         // Arrow heads
-        // Top arrow head (at ~340 degrees = top-right)
-        val ax1 = w * 0.85f
-        val ay1 = h * 0.15f
-        drawLine(color, Offset(ax1, ay1), Offset(ax1 - 5f, ay1 + 2f), 2f, StrokeCap.Round)
-        drawLine(color, Offset(ax1, ay1), Offset(ax1 - 1f, ay1 + 5f), 2f, StrokeCap.Round)
-
-        // Bottom arrow head (at ~160 degrees = bottom-left)
-        val ax2 = w * 0.15f
-        val ay2 = h * 0.85f
-        drawLine(color, Offset(ax2, ay2), Offset(ax2 + 5f, ay2 - 2f), 2f, StrokeCap.Round)
-        drawLine(color, Offset(ax2, ay2), Offset(ax2 + 1f, ay2 - 5f), 2f, StrokeCap.Round)
+        val w = size.width
+        val h = size.height
+        drawLine(color, Offset(w * 0.85f, h * 0.15f), Offset(w * 0.85f - 4f, h * 0.15f + 3f), 2f, StrokeCap.Round)
+        drawLine(color, Offset(w * 0.85f, h * 0.15f), Offset(w * 0.85f - 1f, h * 0.15f + 5f), 2f, StrokeCap.Round)
+        drawLine(color, Offset(w * 0.15f, h * 0.85f), Offset(w * 0.15f + 4f, h * 0.85f - 3f), 2f, StrokeCap.Round)
+        drawLine(color, Offset(w * 0.15f, h * 0.85f), Offset(w * 0.15f + 1f, h * 0.85f - 5f), 2f, StrokeCap.Round)
     }
 }
