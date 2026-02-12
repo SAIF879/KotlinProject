@@ -26,6 +26,10 @@ kotlin {
             implementation(libs.androidx.camera.camera2)
             implementation(libs.androidx.camera.lifecycle)
             implementation(libs.androidx.camera.view)
+            implementation(libs.androidx.camera.video)
+            implementation(libs.koin.core)
+            implementation(libs.koin.android)
+            implementation(libs.koin.compose.viewmodel)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
