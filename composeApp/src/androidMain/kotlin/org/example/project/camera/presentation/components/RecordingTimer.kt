@@ -1,39 +1,34 @@
 package org.example.project.camera.presentation.components
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.example.project.camera.presentation.theme.SurveillanceColors
 
 /**
- * Displays a recording timer badge with a pulsing red dot indicator.
+ * Surveillance-style recording timer.
  *
- * Only visible while [isRecording] is `true`. Uses [AnimatedVisibility] for
- * smooth enter/exit transitions.
+ * When recording: shows "● REC  00:42" in red monospace with a pulsing dot.
+ * When idle: hidden (empty).
  */
 @Composable
 fun RecordingTimer(
@@ -41,54 +36,55 @@ fun RecordingTimer(
     formattedTime: String,
     modifier: Modifier = Modifier,
 ) {
-    AnimatedVisibility(
-        visible = isRecording,
-        enter = fadeIn(),
-        exit = fadeOut(),
-        modifier = modifier,
-    ) {
-        Row(
-            modifier = Modifier
-                .clip(RoundedCornerShape(24.dp))
-                .background(Color.Black.copy(alpha = 0.6f))
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            PulsingRedDot()
+    if (!isRecording) return
 
-            Text(
-                text = formattedTime,
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                fontFamily = FontFamily.Monospace,
-            )
-        }
-    }
-}
-
-/**
- * Small red circle that pulses (fades in/out) to indicate active recording.
- */
-@Composable
-private fun PulsingRedDot() {
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val alpha by infiniteTransition.animateFloat(
+    val infiniteTransition = rememberInfiniteTransition(label = "rec_pulse")
+    val dotAlpha by infiniteTransition.animateFloat(
         initialValue = 1f,
         targetValue = 0.2f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 800),
+            animation = tween(600),
             repeatMode = RepeatMode.Reverse,
         ),
-        label = "pulse_alpha",
+        label = "dot_alpha",
     )
 
-    Box(
-        modifier = Modifier
-            .size(12.dp)
-            .alpha(alpha)
-            .clip(CircleShape)
-            .background(Color(0xFFEF4444)),
-    )
+    Row(
+        modifier = modifier
+            .background(
+                color = SurveillanceColors.RecRed.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(4.dp),
+            )
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // Pulsing red dot
+        Canvas(modifier = Modifier.size(8.dp)) {
+            drawCircle(
+                color = SurveillanceColors.RecRed.copy(alpha = dotAlpha),
+            )
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Text(
+            text = "REC",
+            color = SurveillanceColors.RecRed,
+            fontSize = 12.sp,
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 2.sp,
+        )
+
+        Spacer(modifier = Modifier.width(10.dp))
+
+        Text(
+            text = formattedTime,
+            color = SurveillanceColors.TextPrimary,
+            fontSize = 14.sp,
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.Medium,
+            letterSpacing = 1.sp,
+        )
+    }
 }

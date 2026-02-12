@@ -16,11 +16,17 @@ interface CameraRepository {
     /** Observable stream of the current recording state. */
     val recordingState: StateFlow<RecordingState>
 
+    /** Whether the front-facing camera is currently active. */
+    val isFrontCamera: StateFlow<Boolean>
+
     /** Begin video recording. Returns [Result.success] or a domain error. */
     suspend fun startRecording(): Result<Unit>
 
     /** Stop the active recording. Returns [Result.success] or a domain error. */
     suspend fun stopRecording(): Result<Unit>
+
+    /** Switch between front and back cameras. */
+    fun switchCamera()
 
     /** Release all camera resources. Should be called when camera is no longer needed. */
     fun release()

@@ -11,6 +11,7 @@ import org.example.project.camera.domain.model.CameraError
 data class CameraUiState(
     val isCameraReady: Boolean = false,
     val isRecording: Boolean = false,
+    val isFrontCamera: Boolean = false,
     val elapsedSeconds: Long = 0L,
     val error: CameraError? = null,
 ) {

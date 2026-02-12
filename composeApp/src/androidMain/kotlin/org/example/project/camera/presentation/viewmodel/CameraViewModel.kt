@@ -41,6 +41,7 @@ class CameraViewModel(
 
     init {
         observeRecordingState()
+        observeCameraLens()
     }
 
     // ──────────────────────────────────────────────────────────────────────
@@ -66,6 +67,11 @@ class CameraViewModel(
     /** Clears the current error so the UI can return to normal state. */
     fun dismissError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    /** Switches between front and back camera. Disabled while recording. */
+    fun switchCamera() {
+        cameraRepository.switchCamera()
     }
 
     // ──────────────────────────────────────────────────────────────────────
@@ -99,6 +105,14 @@ class CameraViewModel(
                         }
                     }
                 }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun observeCameraLens() {
+        cameraRepository.isFrontCamera
+            .onEach { isFront ->
+                _uiState.update { it.copy(isFrontCamera = isFront) }
             }
             .launchIn(viewModelScope)
     }

@@ -46,10 +46,16 @@ class CameraRepositoryImpl(
     private val _recordingState = MutableStateFlow<RecordingState>(RecordingState.Idle)
     override val recordingState: StateFlow<RecordingState> = _recordingState.asStateFlow()
 
+    private val _isFrontCamera = MutableStateFlow(false)
+    override val isFrontCamera: StateFlow<Boolean> = _isFrontCamera.asStateFlow()
+
+    private var currentCameraSelector: CameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
     private var cameraProvider: ProcessCameraProvider? = null
     private var videoCapture: VideoCapture<Recorder>? = null
     private var activeRecording: Recording? = null
     private var preview: Preview? = null
+    private var boundLifecycleOwner: LifecycleOwner? = null
+    private var boundPreviewView: PreviewView? = null
 
     // ──────────────────────────────────────────────────────────────────────
     // Camera binding (called from presentation layer)
@@ -62,6 +68,39 @@ class CameraRepositoryImpl(
      * Must be called before [startRecording].
      */
     fun bindCamera(
+        lifecycleOwner: LifecycleOwner,
+        previewView: PreviewView,
+    ) {
+        boundLifecycleOwner = lifecycleOwner
+        boundPreviewView = previewView
+        bindCameraInternal(lifecycleOwner, previewView)
+    }
+
+    /**
+     * Switches between front and back camera.
+     * Cannot switch while actively recording.
+     */
+    override fun switchCamera() {
+        if (_recordingState.value is RecordingState.Recording) {
+            Log.w(TAG, "Cannot switch camera while recording")
+            return
+        }
+
+        currentCameraSelector = if (currentCameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) {
+            CameraSelector.DEFAULT_FRONT_CAMERA
+        } else {
+            CameraSelector.DEFAULT_BACK_CAMERA
+        }
+        _isFrontCamera.value = currentCameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA
+
+        val owner = boundLifecycleOwner
+        val view = boundPreviewView
+        if (owner != null && view != null) {
+            bindCameraInternal(owner, view)
+        }
+    }
+
+    private fun bindCameraInternal(
         lifecycleOwner: LifecycleOwner,
         previewView: PreviewView,
     ) {
@@ -84,16 +123,16 @@ class CameraRepositoryImpl(
                         .build()
                     videoCapture = VideoCapture.withOutput(recorder)
 
-                    // Unbind previous use cases, then bind both
+                    // Unbind previous use cases, then bind with current selector
                     provider.unbindAll()
                     provider.bindToLifecycle(
                         lifecycleOwner,
-                        CameraSelector.DEFAULT_BACK_CAMERA,
+                        currentCameraSelector,
                         preview,
                         videoCapture,
                     )
 
-                    Log.d(TAG, "Camera bound successfully")
+                    Log.d(TAG, "Camera bound successfully (front=${_isFrontCamera.value})")
                 } catch (e: Exception) {
                     Log.e(TAG, "Camera binding failed", e)
                     _recordingState.value = RecordingState.Error(
